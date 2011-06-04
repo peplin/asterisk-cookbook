@@ -1,0 +1,64 @@
+
+[general]
+static=yes
+writeprotect=no
+clearglobalvars=no
+
+[globals]
+CONSOLE=Console/dsp				; Console interface for demo
+IAXINFO=guest					; IAXtel username/password
+TRUNK=Zap/G2					; Trunk interface
+TRUNKMSD=1					; MSD digits to strip (usually 1 or 0)
+
+[default]
+exten => s,1,Set(CALLERID(name)=${DB(cidname/${CALLERID(num)})})
+exten => s,n,Dial(SIP/<%= @users[0][:username] %>, 10)
+exten => s,n, Hangup
+exten => <%= @users[0][:username] %>, 1, Dial(SIP/<%= @users[0][:username] %>, 10)
+
+[google-in]
+exten => <%= @auth[:username] %>, 1, GotoIf(${DB_EXISTS(gv_dialout/channel)}?bridged)
+exten => <%= @auth[:username] %>, n, NoOp(Callerid  ${CALLERID(name)})
+exten => <%= @auth[:username] %>, n, Set(CALLERID(num)=${SHIFT(CALLERID(name),@)})
+exten => <%= @auth[:username] %>, n, Set(CALLERID(name)=${DB(cidname/${CALLERID(num)})})
+exten => <%= @auth[:username] %>, n, Dial(SIP/<%= @users[0][:username] %>, 20, aD(:1))
+exten => <%= @auth[:username] %>, n(bridged),Bridge(${DB_DELETE(gv_dialout/channel)}, p)
+
+[outbound]
+include => seven-digit
+include => local-devices
+include => tollfree
+include => talk-gmail-outbound
+include => talk-numeric-outbound
+include => dial-uri
+
+[local-devices]
+<% @users.each do |user| %>
+exten => <%= user[:extension] %>, 1, Dial(SIP/<%= user[:username] %>, 10)
+<% end %>
+
+[tollfree]
+exten => _411, 1, Dial(SIP/18004664411@proxy.ideasip.com,60)
+exten => _1800NXXXXXX,1,Dial(SIP/${EXTEN}@proxy.ideasip.com,60) 
+exten => _1888NXXXXXX,1,Dial(SIP/${EXTEN}@proxy.ideasip.com,60) 
+exten => _1877NXXXXXX,1,Dial(SIP/${EXTEN}@proxy.ideasip.com,60) 
+exten => _1866NXXXXXX,1,Dial(SIP/${EXTEN}@proxy.ideasip.com,60)
+
+[seven-digit]
+exten => _NXXXXXX,1,Set(CALLERID(dnid)=1512${CALLERID(dnid)})
+exten => _NXXXXXX,n,Goto(1512${EXTEN},1)
+exten => _NXXNXXXXXX,1,Set(CALLERID(dnid)=1${CALLERID(dnid)})
+exten => _NXXNXXXXXX,n,Goto(1${EXTEN},1)
+
+[talk-gmail-outbound]
+exten => _[a-z].@gmail.com,1,Dial(gtalk/google/${EXTEN}@gmail.com)
+exten => _[A-Z].@gmail.com,1,Dial(gtalk/google/${EXTEN}@gmail.com)
+
+[talk-numeric-outbound]
+exten => _1XXXXXXXXXX,1,Dial(gtalk/google/+${EXTEN}@voice.google.com)
+exten => _+1XXXXXXXXXX,1,Dial(gtalk/google/+${EXTEN}@voice.google.com)
+
+[dial-uri] 
+exten => _[a-z].,1,Dial(SIP/${EXTEN}@${SIPDOMAIN},120,tr)
+exten => _[A-Z].,1,Dial(SIP/${EXTEN}@${SIPDOMAIN},120,tr)
+exten => _X.,1,Dial(SIP/${EXTEN}@${SIPDOMAIN},120,tr)

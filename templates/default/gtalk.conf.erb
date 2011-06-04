@@ -1,0 +1,14 @@
+[general]
+context=google-in		; Context to dump call into
+allowguest=yes
+
+[guest]			; special account for options on guest account
+disallow=all
+allow=ulaw
+
+[gtalk]
+username=<%= @auth[:username] %>
+disallow=all
+allow=ulaw
+context=google-in
+connection=google
