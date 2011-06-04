@@ -7,6 +7,10 @@ outgoing calls for a single Google Voice number.
 Changes
 =======
 
+## v0.4.0:
+
+* Add documentation and a check to make sure we're in Ubuntu/Debian
+
 ## v0.3.0:
 
 * Initial version, tested on Ubuntu only
