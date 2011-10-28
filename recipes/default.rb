@@ -30,41 +30,57 @@ when "ubuntu","debian"
     mode 0644
     notifies :run, resources(:bash => "add apt key"), :immediately
   end
+end
 
-  package "asterisk-1.8"
-  package "asterisk-dahdi"
+packages = case node[:platform]
+when "ubuntu","debian"
+  %w{asterisk-1.8 asterisk-dahdi}
+when "arch"
+  # Install from the AUR
+  []
+end
 
-  service "asterisk" do
-    service_name "asterisk-1.8"
-    supports :restart => true, :reload => true, :status => :true, :debug => :true,
-      "logger-reload" => true, "extensions-reload" => true,
-      "restart-convenient" => true, "force-reload" => true
-  end
+packages.each do |pkg|
+  package pkg
+end
 
-  template "/etc/asterisk/manager.conf" do
-    source "manager.conf.erb"
-    notifies :reload, resources(:service => "asterisk")
-  end
+asterisk_service_name = case node[:platform]
+when "ubuntu","debian"
+  "asterisk-1.8"
+when "arch"
+  "asterisk"
+end
 
-  users = search(:asterisk)
-  template "/etc/asterisk/sip.conf" do
-    source "sip.conf.erb"
-    notifies :reload, resources(:service => "asterisk")
-    external_ip = node[:ec2] ? node[:ec2][:public_ipv4] : node[:ipaddress]
+service "asterisk" do
+  service_name asterisk_service_name
+  supports :restart => true, :reload => true, :status => :true, :debug => :true,
+    "logger-reload" => true, "extensions-reload" => true,
+    "restart-convenient" => true, "force-reload" => true
+end
+
+template "/etc/asterisk/manager.conf" do
+  source "manager.conf.erb"
+  notifies :reload, resources(:service => "asterisk")
+end
+
+users = search(:asterisk)
+template "/etc/asterisk/sip.conf" do
+  source "sip.conf.erb"
+  notifies :reload, resources(:service => "asterisk")
+  external_ip = node[:ec2] ? node[:ec2][:public_ipv4] : node[:ipaddress]
+  owner "asterisk"
+  group "asterisk"
+  mode 0644
+  variables :external_ip => external_ip, :users => users
+end
+
+auth = search(:auth, "id:google")
+%w{extensions gtalk jabber}.each do |config|
+  template "/etc/asterisk/#{config}.conf" do
+    source "#{config}.conf.erb"
     owner "asterisk"
     group "asterisk"
     mode 0644
-    variables :external_ip => external_ip, :users => users
-  end
-
-  auth = search(:auth, "id:google")
-  %w{extensions gtalk jabber}.each do |config|
-    template "/etc/asterisk/#{config}.conf" do
-      source "#{config}.conf.erb"
-      owner "asterisk"
-      group "asterisk"
-      mode 0644
-      variables :auth => auth[0], :users => users
-    end
+    variables :auth => auth[0], :users => users
   end
 end
