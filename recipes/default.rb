@@ -58,29 +58,17 @@ service "asterisk" do
     "restart-convenient" => true, "force-reload" => true
 end
 
-template "/etc/asterisk/manager.conf" do
-  source "manager.conf.erb"
-  notifies :reload, resources(:service => "asterisk")
-end
-
+external_ip = node[:ec2] ? node[:ec2][:public_ipv4] : node[:ipaddress]
 users = search(:asterisk)
-template "/etc/asterisk/sip.conf" do
-  source "sip.conf.erb"
-  notifies :reload, resources(:service => "asterisk")
-  external_ip = node[:ec2] ? node[:ec2][:public_ipv4] : node[:ipaddress]
-  owner "asterisk"
-  group "asterisk"
-  mode 0644
-  variables :external_ip => external_ip, :users => users
-end
-
 auth = search(:auth, "id:google")
-%w{extensions gtalk jabber}.each do |config|
-  template "/etc/asterisk/#{config}.conf" do
-    source "#{config}.conf.erb"
+
+%w{sip manager modules extensions gtalk jabber}.each do |template_file|
+  template "/etc/asterisk/#{template_file}.conf" do
+    source "#{template_file}.conf.erb"
     owner "asterisk"
     group "asterisk"
     mode 0644
-    variables :auth => auth[0], :users => users
+    variables :external_ip => external_ip, :users => users, :auth => auth[0]
+    notifies :reload, resources(:service => "asterisk")
   end
 end
