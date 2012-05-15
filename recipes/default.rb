@@ -20,7 +20,7 @@
 case node['platform']
 when "ubuntu","debian"
   bash "add apt key" do
-    code "sudo apt-key adv --keyserver subkeys.pgp.net --recv-keys 175E41DF"
+    code "apt-key adv --keyserver subkeys.pgp.net --recv-keys 175E41DF"
     action :nothing
     notifies :run, resources(:bash => "apt-get update"), :immediately
   end
