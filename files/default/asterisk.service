@@ -1,0 +1,9 @@
+[Unit]
+Description=Asterisk
+
+[Service]
+ExecStart=/usr/sbin/asterisk -f -G asterisk -U asterisk
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
