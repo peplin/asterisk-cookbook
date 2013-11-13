@@ -1,11 +1,17 @@
+Deprecated
+==========
+
+Heads up: I no longer maintain this as of 2012 - more updates [on my
+site](http://christopherpeplin.com/2011/05/google-voice-asterisk/).
+
+The 'asterisk' cookbook in the Opscode community site is now supported by these folks: https://github.com/mojolingo/asterisk-cookbook
+
 Description
 ===========
 
 Installs Asterisk 1.8 on Debian/Ubuntu and configures it to accept incoming and
 outgoing calls for a single Google Voice number.
 
-Heads up: I no longer maintain this as of 2012 - more updates [on my
-site](http://christopherpeplin.com/2011/05/google-voice-asterisk/).
 
 Changes
 =======
